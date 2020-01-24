@@ -10,4 +10,5 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 
 script:
+  - make style
   - make test

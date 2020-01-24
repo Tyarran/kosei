@@ -9,4 +9,3 @@ class SettingsItemSchema(colander.MappingSchema):
 
 class SettingsSchema(colander.SequenceSchema):
     items = SettingsItemSchema()
-

@@ -18,5 +18,7 @@ RUN pipx ensurepath
 RUN pipx install poetry 
 RUN pipx install black 
 RUN pipx install tox 
+RUN pipx install isort
+RUN pipx install flake8
 
 ENV PYTHONDONTWRITEBYTECODE 1

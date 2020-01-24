@@ -26,23 +26,22 @@ class Sources(enum.Enum):
 
 
 class Source(colander.SchemaType):
-
     def serialize(self, node, appstruct):
         if appstruct is colander.null:
             return colander.null
         if appstruct.name not in list(Sources.__members__):
-            raise colander.Invalid(node, f'{appstruct.name} is not in Sources enum')
+            raise colander.Invalid(node, f"{appstruct.name} is not in Sources enum")
         return appstruct.name
 
     def deserialize(self, node, cstruct):
         if isinstance(cstruct, Sources):
             return cstruct
         if not isinstance(cstruct, str):
-            raise colander.Invalid(node, f'{cstruct} is not a str')
+            raise colander.Invalid(node, f"{cstruct} is not a str")
         try:
             result = Sources[cstruct]
         except KeyError:
-            raise colander.Invalid(node, f'{cstruct} is not a valid enum value')
+            raise colander.Invalid(node, f"{cstruct} is not a valid enum value")
         return result
 
 
@@ -148,7 +147,6 @@ class Configuration:
     def dict(self):
         return {var.name: var.value for var in self._vars.values()}
 
-
     @only_if_binded
     def validate(self):
         names = [node.name for node in self.schema_nodes]
@@ -158,7 +156,6 @@ class Configuration:
             for values in data
             if values["name"] in names
         }
-
 
         schema = colander.MappingSchema()
         for node in self.schema_nodes:
@@ -170,16 +167,16 @@ class Configuration:
                 child.typ
                 for node in self.schema_nodes
                 for child in node.children
-                if node.name == values['name']
-                if child.name == 'value'
+                if node.name == values["name"]
+                if child.name == "value"
             )
-            self._vars[values['name']] = ConfigVar(
-                name=values['name'],
-                value=values['value'],
+            self._vars[values["name"]] = ConfigVar(
+                name=values["name"],
+                value=values["value"],
                 typ=typ,
-                original=values['original'],
-                source=values['source'],
-                path=values['path'],
+                original=values["original"],
+                source=values["source"],
+                path=values["path"],
             )
             self.__validated = True
         return True
@@ -195,14 +192,15 @@ class Configuration:
 
     def declare(self, name, type, source=None, validator=None, required=None):
         schema = ConfigVarSchema(name=name)
-        schema.add(colander.SchemaNode(type(), name='value', validator=validator, required=required))
+        schema.add(
+            colander.SchemaNode(
+                type(), name="value", validator=validator, required=required
+            )
+        )
         self.schema_nodes.append(schema)
 
     def bind(self, data):
-        readers = itertools.chain(
-            self._readers,
-            (BindedReader(data), )
-        )
+        readers = itertools.chain(self._readers, (BindedReader(data),))
         for reader in readers:
             self.data[reader] = reader()
 
