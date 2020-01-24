@@ -10,5 +10,12 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 
 script:
+  - make init
   - make style
+  - make complexity
   - make test
+
+notifications:
+  webhooks:
+    urls:
+      - https://team.rcmd.tech/hooks/go5capwnbtgamgcyp6udcygxuo

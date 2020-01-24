@@ -1,15 +1,33 @@
 .PHONY: test
 
+kosei = docker-compose run kosei
+
+clean:
+	$(kosei) ash /code/docker/clean_virtualenv.sh
+
+init: clean
+	$(kosei) poetry install
+
 style:
-	docker-compose run kosei isort **/*.py -c
-	docker-compose run kosei black --check .
+	$(kosei) isort **/*.py -c
+	$(kosei) black --check .
+	$(kosei) flake8
+
+complexity:
+	$(kosei) poetry run python -m mccabe --min 10 **/*.py
 
 format:
-	docker-compose run kosei isort **/*.py
-	docker-compose run kosei black .
+	$(kosei) isort **/*.py
+	$(kosei) black .
 
 test:
-	docker-compose run kosei tox
+	$(kosei) tox
 
 test-unit:
-	docker-compose run kosei tox -e py38
+	$(kosei) tox -e py38
+
+shell:
+	$(kosei) poetry shell
+
+build:
+	docker-compose build

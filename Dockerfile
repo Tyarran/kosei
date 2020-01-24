@@ -20,5 +20,6 @@ RUN pipx install black
 RUN pipx install tox 
 RUN pipx install isort
 RUN pipx install flake8
+RUN pipx runpip flake8 install flake8-black
 
 ENV PYTHONDONTWRITEBYTECODE 1

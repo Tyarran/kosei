@@ -5,3 +5,7 @@ services:
     build: .
     volumes:
         - ${PWD}:/code
+        - virtualenv_cache:/root/.cache/pypoetry
+
+volumes:
+  virtualenv_cache:
