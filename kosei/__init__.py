@@ -262,7 +262,7 @@ config.declare("TEST6", colander.Bool)
 
 data = {
     "TEST4": "1",
-    "TEST3": "My VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy VariableMy Variable",
+    "TEST3": "My Variable",
     "TEST5": 42,
     # "TEST6": 1,
 }

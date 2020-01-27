@@ -11,7 +11,7 @@ init: clean
 style:
 	$(kosei) isort **/*.py -c
 	$(kosei) black --check .
-	$(kosei) flake8
+	$(kosei) flake8 --max-line-length=88
 
 complexity:
 	$(kosei) poetry run python -m mccabe --min 10 **/*.py
