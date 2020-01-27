@@ -1,5 +1,4 @@
 import collections
-import enum
 import functools
 import itertools
 import os
@@ -7,101 +6,14 @@ import os
 import colander
 import colorama
 import more_itertools
-from dotenv import dotenv_values, find_dotenv
+from kosei import adapters, models
+from kosei import readers as readers_mod
+from kosei import schemas
 from tabulate import tabulate
 
 __version__ = "0.1.0"
-
-
 colorama.init()
-
 BOLD = "\033[1m"
-
-
-class Sources(enum.Enum):
-    OVERRIDED = {"color": colorama.Fore.RED}
-    ENVVAR = {"color": colorama.Fore.BLUE}
-    FILE = {"color": colorama.Fore.WHITE}
-    DOTENV = {"color": colorama.Fore.GREEN}
-
-
-class Source(colander.SchemaType):
-    def serialize(self, node, appstruct):
-        if appstruct is colander.null:
-            return colander.null
-        if appstruct.name not in list(Sources.__members__):
-            raise colander.Invalid(node, f"{appstruct.name} is not in Sources enum")
-        return appstruct.name
-
-    def deserialize(self, node, cstruct):
-        if isinstance(cstruct, Sources):
-            return cstruct
-        if not isinstance(cstruct, str):
-            raise colander.Invalid(node, f"{cstruct} is not a str")
-        try:
-            result = Sources[cstruct]
-        except KeyError:
-            raise colander.Invalid(node, f"{cstruct} is not a valid enum value")
-        return result
-
-
-class ConfigVarSchema(colander.MappingSchema):
-    name = colander.SchemaNode(colander.String(), required=True)
-    original = colander.SchemaNode(colander.String(), required=True)
-    source = colander.SchemaNode(Source(), required=True)
-    path = colander.SchemaNode(colander.String(), required=True, missing=None)
-
-
-def dotenv_reader():
-    source = Sources.DOTENV
-    path = find_dotenv()
-    if path:
-        values = dotenv_values(path)
-        return [
-            {
-                "name": name,
-                "value": value,
-                "original": str(value),
-                "source": source,
-                "path": path,
-            }
-            for name, value in values.items()
-        ]
-
-
-class BindedReader:
-    source = Sources.OVERRIDED
-
-    def __init__(self, data):
-        self.data = data
-
-    def __call__(self):
-        return [
-            {
-                "name": name,
-                "value": str(value),
-                "original": str(value),
-                "source": self.source,
-            }
-            for name, value in self.data.items()
-        ]
-
-
-class ConfigVar:
-    name = None
-    value = None
-    original = None
-    source = None
-    typ = None
-    path = None
-
-    def __init__(self, name, value, typ, original, source, path):
-        self.name = name
-        self.value = value
-        self.original = original
-        self.source = source
-        self.typ = typ
-        self.path = path
 
 
 def only_if_validated(func):
@@ -129,11 +41,9 @@ class Configuration:
     __validated = False
     data = {}
     _vars = {}
-    _dotenv_data = {}
-    _readers = None
 
     def __init__(self, readers=None):
-        self._readers = readers or []
+        self.readers = readers or []
 
     @property
     def validated(self):
@@ -151,10 +61,10 @@ class Configuration:
     def validate(self):
         names = [node.name for node in self.schema_nodes]
         data = {
-            values["name"]: values
+            values.name: adapters.DictToDeserializeRawVarAdapter(values).to_dict()
             for data in self.data.values()
             for values in data
-            if values["name"] in names
+            if values.name in names
         }
 
         schema = colander.MappingSchema()
@@ -170,7 +80,7 @@ class Configuration:
                 if node.name == values["name"]
                 if child.name == "value"
             )
-            self._vars[values["name"]] = ConfigVar(
+            self._vars[values["name"]] = models.Variable(
                 name=values["name"],
                 value=values["value"],
                 typ=typ,
@@ -191,7 +101,7 @@ class Configuration:
             ) from exc
 
     def declare(self, name, type, source=None, validator=None, required=None):
-        schema = ConfigVarSchema(name=name)
+        schema = schemas.Variable(name=name)
         schema.add(
             colander.SchemaNode(
                 type(), name="value", validator=validator, required=required
@@ -200,9 +110,9 @@ class Configuration:
         self.schema_nodes.append(schema)
 
     def bind(self, data):
-        readers = itertools.chain(self._readers, (BindedReader(data),))
+        readers = itertools.chain(self.readers, (readers_mod.BindedReader(data),))
         for reader in readers:
-            self.data[reader] = reader()
+            self.data[reader] = reader() or {}
 
         self.__validated = False
 
@@ -249,16 +159,12 @@ def my_validator(node, value):
         raise colander.Invalid(node, f"'{value}' not starts with 'My'", value)
 
 
-config = Configuration(readers=[dotenv_reader])
+config = Configuration(readers=[readers_mod.dotenv_reader])
 
-# config.declare("TEST", colander.String)
-# config.declare("TEST2", colander.String)
 config.declare("TEST3", colander.String, validator=my_validator, required=False)
 config.declare("TEST4", colander.Integer)
 config.declare("TEST5", colander.String)
 config.declare("TEST6", colander.Bool)
-
-# config.bind({"TEST": "Variable", "TEST2": "Variable", "TEST3": "Variable"})
 
 data = {
     "TEST4": "1",
@@ -267,11 +173,7 @@ data = {
     # "TEST6": 1,
 }
 data.update(os.environ)
-# config._read_env()
 config.bind(data)
 
 
 config.validate()
-# config.TEST
-
-# print(config._vars)
