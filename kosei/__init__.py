@@ -1,19 +1,13 @@
-import collections
 import functools
 import itertools
 import os
 
 import colander
-import colorama
-import more_itertools
 from kosei import adapters, models
 from kosei import readers as readers_mod
 from kosei import schemas
-from tabulate import tabulate
 
 __version__ = "0.1.0"
-colorama.init()
-BOLD = "\033[1m"
 
 
 def only_if_validated(func):
@@ -80,14 +74,8 @@ class Configuration:
                 if node.name == values["name"]
                 if child.name == "value"
             )
-            self._vars[values["name"]] = models.Variable(
-                name=values["name"],
-                value=values["value"],
-                typ=typ,
-                original=values["original"],
-                source=values["source"],
-                path=values["path"],
-            )
+            values.update({"typ": typ})
+            self._vars[values["name"]] = models.Variable(**values)
             self.__validated = True
         return True
 
@@ -115,43 +103,6 @@ class Configuration:
             self.data[reader] = reader() or {}
 
         self.__validated = False
-
-    def __str__(self):
-        data = collections.OrderedDict(
-            sorted(self._vars.items(), key=lambda item: item[0])
-        )
-
-        def format_text(text, color=colorama.Fore.RESET, max=50):
-            chunks = more_itertools.chunked(text, max)
-            lines = (color + ("".join(line)) + colorama.Fore.RESET for line in chunks)
-            return "\n".join(lines)
-
-        def colorize(source):
-            return f"{source.value['color']}{source.name}{colorama.Fore.RESET}"
-
-        def colorize_name(name):
-            return f"{BOLD}{colorama.Fore.BLUE}{name}{colorama.Fore.RESET}"
-
-        def value(value):
-            return format_text(str(value), colorama.Fore.YELLOW)
-
-        def typ(typ):
-            return f"{colorama.Fore.CYAN}{typ.__class__.__name__}{colorama.Fore.RESET}"
-
-        data = (
-            (
-                colorize_name(d.name),
-                value(str(d.value)),
-                typ(d.typ),
-                format_text(f'"{str(d.original)}"'),
-                colorize(d.source),
-                d.path,
-            )
-            for d in data.values()
-        )
-        return tabulate(
-            data, headers=("Name", "Value", "Type", "Original", "Source", "Path")
-        )
 
 
 def my_validator(node, value):
