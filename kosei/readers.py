@@ -1,3 +1,5 @@
+import os
+
 from dotenv import dotenv_values, find_dotenv
 from kosei import constants, models
 
@@ -25,3 +27,14 @@ class BindedReader:
             for name, value in self.data.items()
         )
         return result
+
+
+def env_reader():
+    source = constants.Sources.ENVVAR
+
+    result = (
+        models.RawVar(name, value=value, source=source, path=None)
+        for name, value
+        in os.environ.items()
+    )
+    return result

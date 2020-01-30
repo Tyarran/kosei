@@ -98,9 +98,10 @@ class Configuration:
         self.schema_nodes.append(schema)
 
     def bind(self, data):
-        readers = itertools.chain(self.readers, (readers_mod.BindedReader(data),))
-        for reader in readers:
+        for reader in self.readers:
             self.data[reader] = reader() or {}
+        binded_reader = readers_mod.BindedReader(data)
+        self.data[binded_reader] = binded_reader()
 
         self.__validated = False
 
@@ -110,12 +111,13 @@ def my_validator(node, value):
         raise colander.Invalid(node, f"'{value}' not starts with 'My'", value)
 
 
-config = Configuration(readers=[readers_mod.dotenv_reader])
+config = Configuration(readers=[readers_mod.dotenv_reader, readers_mod.env_reader])
 
 config.declare("TEST3", colander.String, validator=my_validator, required=False)
 config.declare("TEST4", colander.Integer)
 config.declare("TEST5", colander.String)
 config.declare("TEST6", colander.Bool)
+config.declare("TEST7", colander.Bool)
 
 data = {
     "TEST4": "1",
@@ -123,7 +125,6 @@ data = {
     "TEST5": 42,
     # "TEST6": 1,
 }
-data.update(os.environ)
 config.bind(data)
 
 
