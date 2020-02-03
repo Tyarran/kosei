@@ -1,5 +1,9 @@
 language: python
 
+env:
+  - PYVERSION=py36
+  - PYVERSION=py37
+  - PYVERSION=py38
 
 services:
   - docker

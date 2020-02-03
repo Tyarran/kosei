@@ -1,6 +1,7 @@
 .PHONY: test
 
 kosei = docker-compose run kosei
+PYVERSION ?= py38
 
 clean:
 	$(kosei) ash /code/docker/clean_virtualenv.sh
@@ -21,10 +22,7 @@ format:
 	$(kosei) black .
 
 test:
-	$(kosei) tox
-
-test-unit:
-	$(kosei) tox -e py38
+	$(kosei) tox -e $(PYVERSION)
 
 shell:
 	$(kosei) poetry shell
