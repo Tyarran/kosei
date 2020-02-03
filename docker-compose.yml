@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   kosei:
-    build: .
+    image: rcommande/kosei_dev
     volumes:
         - ${PWD}:/code
         - virtualenv_cache:/root/.cache/pypoetry
