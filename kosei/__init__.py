@@ -1,6 +1,4 @@
 import functools
-import itertools
-import os
 
 import colander
 from kosei import adapters, models

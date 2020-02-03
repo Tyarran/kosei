@@ -34,7 +34,6 @@ def env_reader():
 
     result = (
         models.RawVar(name, value=value, source=source, path=None)
-        for name, value
-        in os.environ.items()
+        for name, value in os.environ.items()
     )
     return result
